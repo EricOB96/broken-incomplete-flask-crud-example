@@ -7,7 +7,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
-    libmysqlclient-dev
+    default-libmysqlclient-dev
 
 # Copy the requirements file into the container
 COPY requirements.txt requirements.txt
