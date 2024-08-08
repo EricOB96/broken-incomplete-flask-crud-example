@@ -11,7 +11,7 @@ CORS(app)
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'secret'
 app.config['MYSQL_DB'] = 'student'
-app.config['MYSQL_HOST'] = 'mysql-container'
+app.config['MYSQL_HOST'] = '140.238.68.88'
 mysql.init_app(app)
 
 def execute_query(query):
@@ -28,28 +28,18 @@ def execute_query(query):
 
 @app.route("/add", methods=['POST'])  # Add Student
 def add():
+    name = request.json.get('name')
+    email = request.json.get('email')
     try:
-        # Logging input data
-        app.logger.info(f"Received data: name={request.json.get('name')}, email={request.json.get('email')}")
-        
-        name = request.json.get('name')
-        email = request.json.get('email')
-        
-        if not name or not email:
-            app.logger.error("Missing name or email")
-            return jsonify({"Result": "Error", "Message": "Name and Email are required"}), 400
-        
-        cur = mysql.connection.cursor()
-        cur.execute('''INSERT INTO students (studentName, email) VALUES (%s, %s)''', (name, email))
-        mysql.connection.commit()
-        cur.close()
-        
-        app.logger.info("Student added successfully")
-        return jsonify({"Result": "Success"}), 201
-    except Exception as e:
-        app.logger.error(f"Database error: {str(e)}")
-        return jsonify({"Result": "Error", "Message": str(e)}), 500
+        query = '''INSERT INTO students(studentName, email) VALUES('{}', '{}');'''.format(name, email)
+        success = execute_query(query)
 
+        if success:
+            return '{"Result": "Success"}'
+        else:
+            return '{"Result": "Error"}'
+    except Exception as e:
+        return '{"Result": "Error", "Message": "' + str(e) + '"}'
 
 @app.route("/update", methods=['PUT'])  # Update Student
 def update():
