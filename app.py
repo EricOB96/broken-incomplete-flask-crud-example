@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)
 
 # MySQL Instance configurations
-app.config['MYSQL_USER'] = 'eric'
+app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'secret'
 app.config['MYSQL_DB'] = 'student'
 app.config['MYSQL_HOST'] = 'mysql-container'
@@ -28,18 +28,28 @@ def execute_query(query):
 
 @app.route("/add", methods=['POST'])  # Add Student
 def add():
-    name = request.json.get('name')
-    email = request.json.get('email')
     try:
-        query = '''INSERT INTO students(studentName, email) VALUES('{}', '{}');'''.format(name, email)
-        success = execute_query(query)
-
-        if success:
-            return '{"Result": "Success"}'
-        else:
-            return '{"Result": "Error"}'
+        # Logging input data
+        app.logger.info(f"Received data: name={request.json.get('name')}, email={request.json.get('email')}")
+        
+        name = request.json.get('name')
+        email = request.json.get('email')
+        
+        if not name or not email:
+            app.logger.error("Missing name or email")
+            return jsonify({"Result": "Error", "Message": "Name and Email are required"}), 400
+        
+        cur = mysql.connection.cursor()
+        cur.execute('''INSERT INTO students (studentName, email) VALUES (%s, %s)''', (name, email))
+        mysql.connection.commit()
+        cur.close()
+        
+        app.logger.info("Student added successfully")
+        return jsonify({"Result": "Success"}), 201
     except Exception as e:
-        return '{"Result": "Error", "Message": "' + str(e) + '"}'
+        app.logger.error(f"Database error: {str(e)}")
+        return jsonify({"Result": "Error", "Message": str(e)}), 500
+
 
 @app.route("/update", methods=['PUT'])  # Update Student
 def update():
