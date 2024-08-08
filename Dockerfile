@@ -1,29 +1,27 @@
-# Use an official Python runtime as a parent image
-FROM python:3.8-slim
+FROM python:3.8-alpine
 
-# Set the working directory in the container
+# Install MariaDB dependencies
+RUN apk add --no-cache mariadb-dev build-base pkgconf
+
+# Install application requirements
+COPY requirements.txt /app/requirements.txt
 WORKDIR /app
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    pkg-config \
-    default-libmysqlclient-dev
+# Copy application files
+COPY . /app
 
-# Copy the requirements file into the container
-COPY requirements.txt requirements.txt
+# Set environment variables
+ENV MYSQL_USER eric
+ENV MYSQL_PASSWORD secret
+ENV MYSQL_DB student
+ENV MYSQL_HOST 140.238.68.88
+ENV MYSQL_PORT 3306
+ENV MYSQLCLIENT_CFLAGS "-I/usr/include/mariadb"
+ENV MYSQLCLIENT_LDFLAGS "-L/usr/lib/"
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the current directory contents into the container at /app
-COPY . .
-
-# Make port 8080 available to the world outside this container
+# Expose port 8080
 EXPOSE 8080
 
-# Define environment variable
-ENV NAME World
-
-# Run app.py when the container launches
-CMD ["python", "app.py"]
+# Use gunicorn as the WSGI server
+ENTRYPOINT ["gunicorn", "--workers=3", "--bind=0.0.0.0:8080", "app:app"]
