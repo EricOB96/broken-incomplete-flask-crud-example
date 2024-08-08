@@ -1,3 +1,4 @@
+# Use an official Python runtime as a parent image
 FROM python:3.8-slim
 
 # Set the working directory in the container
@@ -6,6 +7,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
+    pkg-config \
     default-libmysqlclient-dev
 
 # Copy the requirements file into the container
